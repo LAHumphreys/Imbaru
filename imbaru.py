@@ -5,13 +5,13 @@ from typing import Optional
 
 
 class State(Enum):
-    TRUTH="T"
-    LIE="L"
-    UNKNOWN=""
+    TRUTH = "T"
+    LIE = "L"
+    UNKNOWN = ""
 
 
 class SymbolType(Enum):
-    CIRCLE="O"
+    CIRCLE = "O"
     TRIANGLE = "T"
 
 
@@ -36,24 +36,32 @@ class Statement:
                 return SymbolType.CIRCLE
 
 
+def new_triangle(symbol: str):
+    return Statement(symbol=symbol, type=SymbolType.TRIANGLE, state=State.UNKNOWN)
+
+
+def new_circle(symbol: str):
+    return Statement(symbol=symbol, type=SymbolType.CIRCLE, state=State.UNKNOWN)
+
+
 @dataclass
 class SymbolValue:
     symbol: str
     type: SymbolType
 
     def __str__(self):
-        return "%s: %s" %(self.symbol, self.type.name)
+        return "%s: %s" % (self.symbol, self.type.name)
+
     def __repr__(self):
         return self.__str__()
 
 
+SymbolSet = tuple[SymbolValue, ...]
 
-
-SymbolSet = tuple[SymbolValue, SymbolValue, SymbolValue]
 
 @dataclass
 class Statue:
-    symbols: tuple[Statement, Statement, Statement]
+    symbols: tuple[Statement, ...]
 
     def reset(self):
         for symbol in self.symbols:
@@ -101,34 +109,29 @@ class Statue:
     def get_possible_solutions(self) -> list[SymbolSet]:
         possibilities: list[SymbolSet] = []
 
+        def known_type(statement: Statement) -> SymbolValue:
+            return SymbolValue(symbol=statement.symbol, type=statement.get_implied_type())
+
+        def type_if_true(statement: Statement) -> SymbolValue:
+            return SymbolValue(symbol=statement.symbol, type=statement.calculate_implied_type(State.TRUTH))
+
+        def type_if_false(statement: Statement) -> SymbolValue:
+            return SymbolValue(symbol=statement.symbol, type=statement.calculate_implied_type(State.LIE))
+
         if self.is_valid():
             self.resolve_unknowns()
             counter = self.count_states()
             if counter[State.UNKNOWN] == 0:
                 # This is easy - there is only one solution
-                possibilities = [(
-                    SymbolValue(symbol=self.symbols[0].symbol, type=self.symbols[0].get_implied_type()),
-                    SymbolValue(symbol=self.symbols[1].symbol, type=self.symbols[1].get_implied_type()),
-                    SymbolValue(symbol=self.symbols[2].symbol, type=self.symbols[2].get_implied_type()),
-                )]
+                possibilities = [tuple(known_type(s) for s in self.symbols)]
             elif counter[State.UNKNOWN] == 3:
                 # This is also easy - there are exactly 3 possible solutions of True, False, False
-                possibilities = [(
-                    SymbolValue(symbol=self.symbols[0].symbol, type=self.symbols[0].calculate_implied_type(State.TRUTH)),
-                    SymbolValue(symbol=self.symbols[1].symbol, type=self.symbols[1].calculate_implied_type(State.LIE)),
-                    SymbolValue(symbol=self.symbols[2].symbol, type=self.symbols[2].calculate_implied_type(State.LIE)),
-                ), (
-                    SymbolValue(symbol=self.symbols[0].symbol, type=self.symbols[0].calculate_implied_type(State.LIE)),
-                    SymbolValue(symbol=self.symbols[1].symbol, type=self.symbols[1].calculate_implied_type(State.TRUTH)),
-                    SymbolValue(symbol=self.symbols[2].symbol, type=self.symbols[2].calculate_implied_type(State.LIE)),
-                ), (
-                    SymbolValue(symbol=self.symbols[0].symbol, type=self.symbols[0].calculate_implied_type(State.LIE)),
-                    SymbolValue(symbol=self.symbols[1].symbol, type=self.symbols[1].calculate_implied_type(State.LIE)),
-                    SymbolValue(symbol=self.symbols[2].symbol, type=self.symbols[2].calculate_implied_type(State.TRUTH)),
-                )]
-                pass
+                possibilities = [
+                    (type_if_true(self.symbols[0]),  type_if_false(self.symbols[1]), type_if_false(self.symbols[2])),
+                    (type_if_false(self.symbols[0]), type_if_true(self.symbols[1]),  type_if_false(self.symbols[2])),
+                    (type_if_false(self.symbols[0]), type_if_false(self.symbols[1]), type_if_true(self.symbols[2]))]
             elif counter[State.UNKNOWN] == 2:
-                fixed: Statement = None
+                fixed: Optional[Statement] = None
                 unknowns: list[Statement] = []
                 for symbol in self.symbols:
                     if symbol.state == State.LIE:
@@ -137,30 +140,16 @@ class Statue:
                         unknowns.append(symbol)
                     else:
                         raise ValueError()
-                possibilities = [(
-                    SymbolValue(symbol=fixed.symbol, type=self.symbols[0].get_implied_type()),
-                    SymbolValue(symbol=unknowns[0].symbol, type=unknowns[0].calculate_implied_type(State.TRUTH)),
-                    SymbolValue(symbol=unknowns[1].symbol, type=unknowns[1].calculate_implied_type(State.LIE)),
-                ), (
-                    SymbolValue(symbol=fixed.symbol, type=self.symbols[0].get_implied_type()),
-                    SymbolValue(symbol=unknowns[0].symbol, type=unknowns[0].calculate_implied_type(State.LIE)),
-                    SymbolValue(symbol=unknowns[1].symbol, type=unknowns[1].calculate_implied_type(State.TRUTH)),
-                )]
-                pass
+                possibilities = [(known_type(fixed), type_if_true(unknowns[0]), type_if_false(unknowns[1])),
+                                 (known_type(fixed), type_if_false(unknowns[0]), type_if_true(unknowns[1]))]
             else:
-                #This shouldn't happen since we're consistent and have resolved
+                # This shouldn't happen since we're consistent and have resolved
                 raise ValueError
 
         return possibilities
 
 
 def propagate_symbols(statues: list[Statue], symbols: Optional[SymbolSet]) -> bool:
-    backup = deepcopy(statues)
-    def final_sanity_check():
-        for statue in statues:
-            if not statue.is_valid():
-                raise ValueError()
-
     if symbols:
         for symbol in symbols:
             for statue in statues:
@@ -177,29 +166,19 @@ def propagate_symbols(statues: list[Statue], symbols: Optional[SymbolSet]) -> bo
                 statues[i+1].symbols = working_statues[i].symbols
             for symbol in possibility:
                 statues[0].resolve_symbol(symbol.symbol, symbol.type)
-            final_sanity_check()
             return True
 
     return False
 
 
 def main():
-    symbols: list[str] = []
     statues: list[Statue] = []
 
     with open("data/statues") as data:
         for ln in data.readlines()[1:]:
             tokens = ln.replace("\n", "").split(",")
-            statements: list[Statement] = []
-            for i in range(6):
-                symbol = tokens[i]
-                if symbol:
-                    if i < 3:
-                        statements.append(Statement(symbol=symbol, type=SymbolType.TRIANGLE, state=State.UNKNOWN))
-                    else:
-                        statements.append(Statement(symbol=symbol, type=SymbolType.CIRCLE, state=State.UNKNOWN))
-                    if symbol not in symbols:
-                        symbols.append(symbol)
+            statements = [new_triangle(symbol) for symbol in tokens[0:3] if symbol]
+            statements += [new_circle(symbol) for symbol in tokens[3:] if symbol]
             statues.append(Statue(symbols=tuple(statements)))
 
     if propagate_symbols(statues, None):
@@ -219,10 +198,11 @@ def main():
                     if solution[symbol.symbol] != symbol.type:
                         raise ValueError
 
-    print ("Triangles:")
+    print("Triangles:")
     for symbol, shape in solution.items():
         if shape == SymbolType.TRIANGLE:
             print("    " + symbol)
 
 
-main()
+if __name__ == "__main__":
+    main()

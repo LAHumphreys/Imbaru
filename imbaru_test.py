@@ -2,11 +2,13 @@ from unittest import TestCase
 from imbaru import Statue, State, SymbolType, Statement, SymbolValue, SymbolSet
 
 
-def make_symbol_set(A, B, C) -> SymbolSet:
-    return SymbolValue("A", A), SymbolValue("B", B), SymbolValue("C", C)
+def make_symbol_set(a, b, c) -> SymbolSet:
+    return SymbolValue("A", a), SymbolValue("B", b), SymbolValue("C", c)
 
-CIR=SymbolType.CIRCLE
-TRI=SymbolType.TRIANGLE
+
+CIR = SymbolType.CIRCLE
+TRI = SymbolType.TRIANGLE
+
 
 class StatueTest(TestCase):
 
@@ -38,7 +40,6 @@ class StatueTest(TestCase):
 
     def test_initial_sate(self):
         self.validate_initial_state()
-
 
     def test_resolve_true(self):
         self.assertTrue(self.statue.resolve_symbol("A", SymbolType.CIRCLE))
@@ -90,7 +91,7 @@ class StatueTest(TestCase):
         self.statue.reset()
         self.validate_initial_state()
 
-    def test_resolve_tripple_false(self):
+    def test_resolve_triple_false(self):
         self.assertTrue(self.statue.resolve_symbol("A", SymbolType.TRIANGLE))
         self.assertTrue(self.statue.is_valid())
         self.assertEqual(self.statue.count_states()[State.UNKNOWN], 2)
@@ -112,6 +113,3 @@ class StatueTest(TestCase):
         solutions = self.statue.get_possible_solutions()
         self.assertEqual(len(solutions), 1)
         self.assertEqual(solutions[0], make_symbol_set(CIR, TRI, TRI))
-
-
-
