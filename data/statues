@@ -1,0 +1,17 @@
+Triangle,Triangle,Triangle,Circle,Circle,Circle
+T:C>//\,T:o>o,,T:\||/>/||\,,
+T:C>//\,IceCream,,T:\||/>o,,
+,,,T:A,Burger,T:V/>/||\
+T:n>U,T:o>=,,T:=>||,,
+T:ooo>/o\,,,T:=>||,T:o>=,
+Tick,,,T:n>U,T:V/>/||\,
+IceCream,Equals,,T:\||/>o,,
+T:o>U,T:\||/>/||\,,T:o>o,,
+T:n>U,,,T:o>=,Tick,
+,,,IceCream,T:\||/>o,Equals
+Tick,T:V/>/||\,,Burger,,
+T:A,T:`||/> /o\,,T:o>U,,
+T:\||/>/||\,T:`||/> /o\,,T:o>U,,
+T:A,,,T:`||/> /o\,Burger,
+Equals,IceCream,,T:\||/>o,,
+IceCream,T:C>//\,T:o>o,,,

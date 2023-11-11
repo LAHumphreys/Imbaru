@@ -24,14 +24,9 @@ class StatueTest(TestCase):
         self.assertEqual(self.statue.count_states()[State.LIE], 0)
 
         self.assertEqual(self.statue.get_possible_solutions(), [
-            make_symbol_set(CIR, CIR, CIR),
-            make_symbol_set(TRI, CIR, CIR),
-            make_symbol_set(CIR, TRI, CIR),
-            make_symbol_set(TRI, TRI, CIR),
-            make_symbol_set(CIR, CIR, TRI),
-            make_symbol_set(TRI, CIR, TRI),
             make_symbol_set(CIR, TRI, TRI),
-            make_symbol_set(TRI, TRI, TRI)
+            make_symbol_set(TRI, CIR, TRI),
+            make_symbol_set(TRI, TRI, CIR)
         ])
 
     def validate_full_resolved(self):
@@ -82,10 +77,8 @@ class StatueTest(TestCase):
         self.assertEqual(self.statue.count_states()[State.LIE], 1)
 
         self.assertEqual(self.statue.get_possible_solutions(), [
-            make_symbol_set(TRI, CIR, CIR),
-            make_symbol_set(TRI, TRI, CIR),
             make_symbol_set(TRI, CIR, TRI),
-            make_symbol_set(TRI, TRI, TRI)
+            make_symbol_set(TRI, TRI, CIR)
         ])
 
         self.assertTrue(self.statue.resolve_symbol("B", SymbolType.TRIANGLE))
